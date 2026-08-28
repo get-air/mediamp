@@ -72,7 +72,9 @@ internal class UriMediaDataImpl @ExperimentalMediampApi constructor(
 
     override fun close() {}
 
+    @OptIn(ExperimentalMediampApi::class)
     override fun toString(): String {
-        return "UriMediaData(uri=$uri, headers=$headers, extraFiles=$extraFiles)"
+        return "UriMediaData(uri=<redacted>, headers=<redacted>, " +
+                "extraFiles=<redacted>, options=${options.size})"
     }
 }
