@@ -56,6 +56,7 @@ import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.actions.CustomAction
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
+import io.github.typesafegithub.workflows.domain.triggers.WorkflowDispatch
 import io.github.typesafegithub.workflows.dsl.JobBuilder
 import io.github.typesafegithub.workflows.dsl.expressions.contexts.GitHubContext
 import io.github.typesafegithub.workflows.dsl.expressions.contexts.SecretsContext
@@ -456,6 +457,7 @@ object ArtifactNames {
 workflow(
     name = "Build",
     on = listOf(
+        WorkflowDispatch(),
         // Including: 
         // - pushing directly to main
         // - pushing to a branch that has an associated PR
