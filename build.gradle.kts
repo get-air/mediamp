@@ -8,6 +8,7 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.gradle.api.publish.PublishingExtension
 
 buildscript {
     repositories {
@@ -48,6 +49,19 @@ allprojects {
         (runCatching { kotlinExtension }.getOrNull() as? KotlinMultiplatformExtension)?.apply {
             compilerOptions {
                 optIn.add("kotlin.ExperimentalSubclassOptIn") // Workaround for IDE bug. This is already stable in Kotlin 2.1.0
+            }
+        }
+    }
+
+    pluginManager.withPlugin("maven-publish") {
+        extensions.configure<PublishingExtension> {
+            repositories.maven {
+                name = "AirGitHubPackages"
+                url = uri("https://maven.pkg.github.com/get-air/mediamp")
+                credentials {
+                    username = providers.environmentVariable("GITHUB_ACTOR").orNull
+                    password = providers.environmentVariable("GITHUB_TOKEN").orNull
+                }
             }
         }
     }

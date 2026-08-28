@@ -54,16 +54,6 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/get-air/mediamp")
-            credentials {
-                username = providers.environmentVariable("GITHUB_ACTOR").orNull
-                password = providers.environmentVariable("GITHUB_TOKEN").orNull
-            }
-        }
-    }
 }
 
 // The Gradle module metadata would retain AGP's internal Kotlin stdlib version
