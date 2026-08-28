@@ -41,6 +41,15 @@ include(":mediamp-web-preview")
 include(":mediamp-mpv-demo") // macOS-only prototype: mpv hwdec + Compose overlay
 include(":mediamp-source-ktxio")
 
+// Air's optional adapter is built only in the Air workspace (and fork CI, which
+// checks out get-air/video beside this repository). Keeping it on the newer
+// toolchain side avoids forcing Kotlin 2.3 build plugins through Air's canonical
+// Kotlin 2.1 compiler while still exposing only com.getair.video contracts.
+if (file("../video/settings.gradle.kts").isFile) {
+    includeBuild("../video")
+    include(":mediamp-air")
+}
+
 include(":ci-helper")
 include(":catalog")
 

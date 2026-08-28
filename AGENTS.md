@@ -25,7 +25,10 @@ smaller `com.getair.video` API.
 - Keep the three-buffer publish/retire/ack protocol bounded. Producer threads
   never wait for Compose, and Compose never waits for a decoder frame.
 - Upstream's public implementation escape hatch is not part of Air's app API.
-  Air-specific capability mapping belongs in the adapter in `get-air/video`.
+  Air-specific capability mapping lives in the optional `mediamp-air` artifact,
+  which implements only `com.getair.video` contracts. It stays on the fork's
+  Kotlin 2.3 build side because Air's canonical Kotlin 2.1 build cannot compile
+  newer Gradle-plugin metadata; applications still never receive mediamp types.
 
 ## Required local gates
 

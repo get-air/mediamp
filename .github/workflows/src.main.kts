@@ -426,8 +426,24 @@ val buildMatrixInstances = listOf(
 
 class BuildJobOutputs : JobOutputs()
 
+fun JobBuilder<*>.checkoutAirVideoContract() {
+    run(
+        name = "Check out Air video contract",
+        command = "git clone --depth 1 https://github.com/get-air/video.git ../video",
+    )
+}
+
+fun JobBuilder<*>.verifyAirAdapterKotlin21Compatibility(matrix: MatrixInstance) {
+    if (matrix.os != OS.UBUNTU) return
+    run(
+        name = "Verify Air adapter from Kotlin 2.1",
+        command = "chmod +x ./ci-helper/test-air-adapter-kotlin21.sh && ./ci-helper/test-air-adapter-kotlin21.sh",
+    )
+}
+
 fun getBuildJobBody(matrix: MatrixInstance): JobBuilder<BuildJobOutputs>.() -> Unit = {
     uses(action = Checkout(submodules_Untyped = "recursive", lfs = true))
+    checkoutAirVideoContract()
 
     with(WithMatrix(matrix)) {
         freeSpace()
@@ -438,6 +454,7 @@ fun getBuildJobBody(matrix: MatrixInstance): JobBuilder<BuildJobOutputs>.() -> U
         setupGradle()
 
         gradleCheck()
+        verifyAirAdapterKotlin21Compatibility(matrix)
         buildFfmpegArtifacts()
         uploadWindowsArm64Runtime()
         verifyAppleXcframeworkPublication()
@@ -578,6 +595,7 @@ workflow(
         block = { ->
             with(WithMatrix(matrix)) {
                 uses(action = Checkout(submodules_Untyped = "recursive", lfs = true))
+                checkoutAirVideoContract()
 
                 val gitTag = getGitTag()
 

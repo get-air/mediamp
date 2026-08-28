@@ -72,6 +72,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Get Tag'
       uses: 'dawidd6/action-get-tag@v1'
@@ -169,6 +172,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Get Tag'
       uses: 'dawidd6/action-get-tag@v1'
@@ -277,6 +283,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Get Tag'
       uses: 'dawidd6/action-get-tag@v1'
@@ -358,6 +367,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Get Tag'
       uses: 'dawidd6/action-get-tag@v1'
@@ -450,6 +462,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Get Tag'
       uses: 'dawidd6/action-get-tag@v1'

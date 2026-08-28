@@ -15,13 +15,25 @@ Initial verified path:
 
 First fork work:
 
-1. Redact media sources and headers everywhere.
-2. Replace the upstream Linux test skip with a live-window surface test and a
-   bounded headless/preview fallback.
-3. Map video rendition selection and live/DVR capability facts into Air's API.
-4. Add Windows D3D and macOS Metal build/runtime gates.
+1. Media source objects, synchronous load failures and custom stream callback
+   targets are redacted. Native mpv diagnostic logging still needs a dedicated
+   credential audit before arbitrary logs may be persisted.
+2. The real Linux Compose/GLX surface has a physical-GPU gate and repeated
+   missing-surface failures are deduplicated. Hosted Xvfb still cannot replace
+   that live gate because Skiko selects its software redrawer there.
+3. `mediamp-air` maps confirmed audio/subtitle/video tracks and native
+   seekability/cache ranges into Air's API. Plain live remains non-seekable;
+   DVR uses the newest moving range.
+4. Windows x64/ARM64, Ubuntu x64 and macOS x64 build/runtime/publication gates
+   passed in GitHub run `33143165171`.
 5. Measure startup, dropped frames, CPU/GPU, memory and `vaapi-copy`; investigate
    DMA-BUF/EGL only with reproducible improvements.
+
+The optional adapter emits Kotlin 2.1 metadata and has been compiled from a
+separate Kotlin 2.1 consumer. Mediamp implementation artifacts remain runtime
+dependencies, so app source never resolves the fork's public `impl` escape
+hatch. Full fork publication to GitHub Packages remains pending because native
+runtime artifacts must be assembled on their matching hosts.
 
 Hosted Linux CI validates compilation, native assembly, zero-config loading and
 reflection compatibility. Xvfb exposes llvmpipe GLX but Skiko selects its software

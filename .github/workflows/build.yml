@@ -24,6 +24,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Setup JBR 21 for other OS'
       uses: 'gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d'
@@ -101,6 +104,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Setup JDK 17 for Windows ARM64'
       uses: 'gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d'
@@ -201,6 +207,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Setup JBR 21 for other OS'
       uses: 'gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d'
@@ -238,6 +247,9 @@ jobs:
         timeout_minutes: '60'
         max_attempts: '2'
         command: './gradlew check "--scan" "--no-configuration-cache" "-Porg.gradle.daemon.idletimeout=60000" "-Pkotlin.native.ignoreDisabledTargets=true" "-Dfile.encoding=UTF-8" "-Dorg.gradle.jvmargs=-Xmx4g" "-Dkotlin.daemon.jvm.options=-Xmx4g" "-Pmediamp.ffmpeg.buildvariant=linux" "-Pmediamp.mpv.buildvariant=linux"'
+    - id: 'air-kotlin-21'
+      name: 'Verify Air adapter from Kotlin 2.1'
+      run: 'chmod +x ./ci-helper/test-air-adapter-kotlin21.sh && ./ci-helper/test-air-adapter-kotlin21.sh'
     - id: 'step-9'
       name: 'Build FFmpeg artifacts'
       run: './gradlew :mediamp-ffmpeg:ffmpegBuildAll "--scan" "--no-configuration-cache" "-Porg.gradle.daemon.idletimeout=60000" "-Pkotlin.native.ignoreDisabledTargets=true" "-Dfile.encoding=UTF-8" "-Dorg.gradle.jvmargs=-Xmx4g" "-Dkotlin.daemon.jvm.options=-Xmx4g" "-Pmediamp.ffmpeg.buildvariant=linux" "-Pmediamp.mpv.buildvariant=linux"'
@@ -262,6 +274,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Free space for macOS'
       continue-on-error: true
@@ -330,6 +345,9 @@ jobs:
       with:
         lfs: 'true'
         submodules: 'recursive'
+    - id: 'air-video'
+      name: 'Check out Air video contract'
+      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
     - id: 'step-1'
       name: 'Resolve JBR location'
       run: |-
