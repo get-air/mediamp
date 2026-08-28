@@ -22,3 +22,9 @@ First fork work:
 4. Add Windows D3D and macOS Metal build/runtime gates.
 5. Measure startup, dropped frames, CPU/GPU, memory and `vaapi-copy`; investigate
    DMA-BUF/EGL only with reproducible improvements.
+
+Hosted Linux CI validates compilation, native assembly, zero-config loading and
+reflection compatibility. Xvfb exposes llvmpipe GLX but Skiko selects its software
+redrawer there, so it is not evidence for the production GLX surface. The live GLX
+gate must run on a real display/GPU host; missing-surface failures are deduplicated
+to keep that unsupported fallback from producing a per-frame log storm.

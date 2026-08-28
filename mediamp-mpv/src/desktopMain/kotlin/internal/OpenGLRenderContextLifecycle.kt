@@ -103,27 +103,55 @@ internal class OpenGLSurfaceDrawResolver(
     private val lifecycle: OpenGLRenderContextLifecycle,
     private val host: MpvRenderContextHost,
 ) : MpvSurfaceDrawResolver {
+    private val unavailableFailureLog = RepeatedFailureLogGate()
+
     override val rendererName: String get() = OpenGLSurfaceRingBackend.rendererName
 
     override fun resolveDrawPass(renderContextReady: Boolean): MpvSurfaceDrawPass? {
-        val snapshot = runCatching { interop.renderSnapshot() }
-            .onFailure {
-                MPVLog.error(host.handle.ptr, "Linux GLX render context unavailable; video stays black", it)
-            }
-            .getOrNull() ?: return null
+        val snapshot = try {
+            interop.renderSnapshot()
+        } catch (failure: Throwable) {
+            logUnavailableOnce(failure)
+            return null
+        }
         val environment = snapshot.environment
         val attached = if (renderContextReady &&
             lifecycle.currentRenderEnvironment()?.identity == environment.identity
         ) {
             true
         } else {
-            runCatching { lifecycle.attachRenderEnvironment(environment) }
-                .onFailure {
-                    MPVLog.error(host.handle.ptr, "Linux GLX render context unavailable; video stays black", it)
-                }
-                .getOrDefault(false)
+            try {
+                lifecycle.attachRenderEnvironment(environment)
+            } catch (failure: Throwable) {
+                logUnavailableOnce(failure)
+                false
+            }
         }
         if (!attached) return null
+        unavailableFailureLog.reset()
         return MpvSurfaceDrawPass(snapshot.directContext) { environment.shareContext }
+    }
+
+    private fun logUnavailableOnce(failure: Throwable) {
+        if (!unavailableFailureLog.shouldLog(failure)) return
+        MPVLog.error(host.handle.ptr, "Linux GLX render context unavailable; video stays black", failure)
+    }
+}
+
+/** Suppresses the same redraw failure until a successful draw resets the gate. */
+internal class RepeatedFailureLogGate {
+    private var lastFailureClass: Class<out Throwable>? = null
+    private var lastFailureMessage: String? = null
+
+    fun shouldLog(failure: Throwable): Boolean {
+        if (failure.javaClass == lastFailureClass && failure.message == lastFailureMessage) return false
+        lastFailureClass = failure.javaClass
+        lastFailureMessage = failure.message
+        return true
+    }
+
+    fun reset() {
+        lastFailureClass = null
+        lastFailureMessage = null
     }
 }
