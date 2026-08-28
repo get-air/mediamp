@@ -57,7 +57,7 @@ allprojects {
         extensions.configure<PublishingExtension> {
             repositories.maven {
                 name = "AirGitHubPackages"
-                url = uri("https://maven.pkg.github.com/get-air/mediamp")
+                url = uri("https://maven.pkg.github.com/air-tv/mediamp")
                 credentials {
                     username = providers.environmentVariable("GITHUB_ACTOR").orNull
                     password = providers.environmentVariable("GITHUB_TOKEN").orNull

@@ -26,7 +26,7 @@ jobs:
         submodules: 'recursive'
     - id: 'air-video'
       name: 'Check out Air video contract'
-      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
+      run: 'git clone --depth 1 https://github.com/air-tv/video.git ../video'
     - id: 'step-1'
       name: 'Setup JBR 21 for other OS'
       uses: 'gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d'
@@ -106,7 +106,7 @@ jobs:
         submodules: 'recursive'
     - id: 'air-video'
       name: 'Check out Air video contract'
-      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
+      run: 'git clone --depth 1 https://github.com/air-tv/video.git ../video'
     - id: 'step-1'
       name: 'Setup JDK 17 for Windows ARM64'
       uses: 'gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d'
@@ -209,7 +209,7 @@ jobs:
         submodules: 'recursive'
     - id: 'air-video'
       name: 'Check out Air video contract'
-      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
+      run: 'git clone --depth 1 https://github.com/air-tv/video.git ../video'
     - id: 'step-1'
       name: 'Setup JBR 21 for other OS'
       uses: 'gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d'
@@ -276,7 +276,7 @@ jobs:
         submodules: 'recursive'
     - id: 'air-video'
       name: 'Check out Air video contract'
-      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
+      run: 'git clone --depth 1 https://github.com/air-tv/video.git ../video'
     - id: 'step-1'
       name: 'Free space for macOS'
       continue-on-error: true
@@ -338,7 +338,7 @@ jobs:
     - 'ARM64'
     permissions:
       actions: 'write'
-    if: '${{ github.repository == ''open-ani/mediamp'' }}'
+    if: '${{ github.repository == ''air-tv/mediamp'' }}'
     steps:
     - id: 'step-0'
       uses: 'actions/checkout@v4'
@@ -347,7 +347,7 @@ jobs:
         submodules: 'recursive'
     - id: 'air-video'
       name: 'Check out Air video contract'
-      run: 'git clone --depth 1 https://github.com/get-air/video.git ../video'
+      run: 'git clone --depth 1 https://github.com/air-tv/video.git ../video'
     - id: 'step-1'
       name: 'Resolve JBR location'
       run: |-

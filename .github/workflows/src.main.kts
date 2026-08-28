@@ -429,7 +429,7 @@ class BuildJobOutputs : JobOutputs()
 fun JobBuilder<*>.checkoutAirVideoContract() {
     run(
         name = "Check out Air video contract",
-        command = "git clone --depth 1 https://github.com/get-air/video.git ../video",
+        command = "git clone --depth 1 https://github.com/air-tv/video.git ../video",
     )
 }
 
@@ -1240,7 +1240,7 @@ object Secrets {
 /// EXTENSIONS
 
 val GitHubContext.isAnimekoRepository
-    get() = """$repository == 'open-ani/mediamp'"""
+    get() = """$repository == 'air-tv/mediamp'"""
 
 val GitHubContext.isPullRequest
     get() = """$event_name == 'pull_request'"""

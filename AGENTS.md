@@ -3,7 +3,7 @@
 This is Air's source fork of `open-ani/mediamp`, pinned initially at
 `4aae5fa2956b5c0530704e0cd218aa75502584c6`. Preserve upstream history,
 copyright notices, Apache-2.0 license text, and the `upstream` remote. Do not
-copy surface files into `get-air/video`; Air adapts this fork behind its own
+copy surface files into `air-tv/video`; Air adapts this fork behind its own
 smaller `com.getair.video` API.
 
 ## Air priorities
@@ -43,4 +43,4 @@ smaller `com.getair.video` API.
 - Never use Robot, PipeWire, or desktop screenshot portals in automated tests.
   Use native frame diagnostics and app-owned window state.
 
-See `AIR_FORK.md` and `get-air/video/docs/mediamp-evaluation-2026-08-28.md`.
+See `AIR_FORK.md` and `air-tv/video/docs/mediamp-evaluation-2026-08-28.md`.

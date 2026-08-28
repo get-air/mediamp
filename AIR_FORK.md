@@ -2,7 +2,7 @@
 
 Air selected this repository as the desktop native-runtime and Compose/Skia
 surface base after a live Linux gate on 2026-08-28. Air's public player contract
-remains in `get-air/video`; applications do not depend on mediamp backend types.
+remains in `air-tv/video`; applications do not depend on mediamp backend types.
 
 Initial verified path:
 

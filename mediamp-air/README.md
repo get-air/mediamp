@@ -5,7 +5,7 @@
 `MediampDesktopVideoPlayer`, and `MediampDesktopVideoSurface`; no mediamp or mpv
 type crosses those public signatures.
 
-The adapter deliberately stays outside the core `get-air/video` artifact so
+The adapter deliberately stays outside the core `air-tv/video` artifact so
 Android, Apple-native, and browser builds do not resolve the desktop MPV stack.
 It is built on the fork side because AGP's built-in Kotlin compiler controls the
 fork plugins. The published adapter emits Kotlin 2.1 metadata and has a real

@@ -24,6 +24,7 @@ concurrency:
 jobs:
   runtime:
     name: Runtime (${{ matrix.id }})
+    if: github.repository == 'air-tv/mediamp'
     strategy:
       fail-fast: false
       matrix:
@@ -67,7 +68,7 @@ jobs:
           submodules: recursive
           lfs: true
       - name: Check out Air video contract
-        run: git clone --depth 1 https://github.com/get-air/video.git ../video
+        run: git clone --depth 1 https://github.com/air-tv/video.git ../video
       - name: Validate package versions
         shell: bash
         env:
@@ -172,6 +173,7 @@ jobs:
   metadata:
     name: Publish adapter and aggregate metadata
     needs: runtime
+    if: github.repository == 'air-tv/mediamp'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -179,7 +181,7 @@ jobs:
           submodules: recursive
           lfs: true
       - name: Check out Air video contract
-        run: git clone --depth 1 https://github.com/get-air/video.git ../video
+        run: git clone --depth 1 https://github.com/air-tv/video.git ../video
       - name: Validate package versions
         env:
           PACKAGE_VERSION: ${{ inputs.version }}
