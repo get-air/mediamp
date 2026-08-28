@@ -15,6 +15,8 @@ smaller `com.getair.video` API.
 - Sources, headers, cookies, bearer tokens, local paths, and credential-bearing
   URLs must be redacted from `toString`, events, logs, exceptions, analytics,
   screenshots names, and cache keys.
+- Every native/Kotlin mpv log must pass through `MPVLog` sanitization before a
+  handler or stdout sees it. Do not bypass the sink or log raw media targets.
 - Linux requires a live Skiko GLX environment before `vo=libmpv` can load.
   Headless smoke/preview tests must not pretend `createRenderContext()` can work
   without that environment. Add a bounded failure/fallback path and a real live

@@ -15,9 +15,9 @@ Initial verified path:
 
 First fork work:
 
-1. Media source objects, synchronous load failures and custom stream callback
-   targets are redacted. Native mpv diagnostic logging still needs a dedicated
-   credential audit before arbitrary logs may be persisted.
+1. Media source objects, synchronous load failures, custom stream callback
+   targets, and native mpv diagnostics are redacted. Log delivery is bounded to
+   prevent malformed native/server output from creating an unbounded log line.
 2. The real Linux Compose/GLX surface has a physical-GPU gate and repeated
    missing-surface failures are deduplicated. Hosted Xvfb still cannot replace
    that live gate because Skiko selects its software redrawer there.

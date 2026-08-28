@@ -77,7 +77,7 @@ public object MPVLog {
                 append(throwable.stackTraceToString())
             }
         }
-        val normalized = body.trimEnd('\r', '\n')
+        val normalized = redactMpvLog(body.trimEnd('\r', '\n'))
         if (normalized.isEmpty()) {
             return
         }
@@ -97,6 +97,33 @@ public object MPVLog {
     public fun info(handle: Long, message: String, throwable: Throwable? = null): Unit = log(handle, INFO, message, throwable)
     public fun debug(handle: Long, message: String, throwable: Throwable? = null): Unit = log(handle, DEBUG, message, throwable)
     public fun verbose(handle: Long, message: String, throwable: Throwable? = null): Unit = log(handle, V, message, throwable)
+}
+
+private const val MAX_LOG_CHARS = 16 * 1024
+private val URI_IN_LOG = Regex("[A-Za-z][A-Za-z0-9+.-]*://[^\\s'\\\"<>]+")
+private val MEDIA_PATH_IN_LOG = Regex(
+    "(?:[A-Za-z]:[\\\\/]|/)[^\\s'\\\"<>]+\\.(?:mkv|mp4|m4v|webm|ts|m2ts|m3u8?|mpd|srt|ass|ssa|vtt)(?:\\?[^\\s'\\\"<>]*)?",
+    RegexOption.IGNORE_CASE,
+)
+private val SENSITIVE_HEADER_IN_LOG = Regex(
+    "(?:authorization|proxy-authorization|cookie|set-cookie|x-[A-Za-z0-9-]*(?:token|key)|api[-_]key)\\s*[:=]\\s*(?:Bearer\\s+)?[^\\s,;]+",
+    RegexOption.IGNORE_CASE,
+)
+private val BEARER_IN_LOG = Regex("\\bBearer\\s+[^\\s,;]+", RegexOption.IGNORE_CASE)
+
+/** Redacts external media locations and credentials before any log sink observes them. */
+internal fun redactMpvLog(value: String): String {
+    val redacted = value
+        .replace(URI_IN_LOG, "<redacted-uri>")
+        .replace(MEDIA_PATH_IN_LOG, "<redacted-media-path>")
+        .replace(SENSITIVE_HEADER_IN_LOG) { match ->
+            val separator = match.value.indexOfFirst { it == ':' || it == '=' }
+            val name = match.value.take(separator.coerceAtLeast(0)).trim()
+            "$name=<redacted>"
+        }
+        .replace(BEARER_IN_LOG, "Bearer <redacted>")
+    return if (redacted.length <= MAX_LOG_CHARS) redacted
+    else redacted.take(MAX_LOG_CHARS) + "… <truncated>"
 }
 
 @Suppress("unused") // Called from JNI as MPVLogKt.onNativeLog(int, String, String).
