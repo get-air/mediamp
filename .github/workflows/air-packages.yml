@@ -1,0 +1,248 @@
+name: Air GitHub Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Immutable fork/runtime version, for example 0.3.1-air.1
+        required: true
+        type: string
+      air_video_version:
+        description: Published com.getair:video version referenced by the adapter
+        required: true
+        default: 0.1.0-SNAPSHOT
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: air-mediamp-packages-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  runtime:
+    name: Runtime (${{ matrix.id }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: windows-x64
+            os: windows-2022
+            msystem: UCRT64
+            publish_task: :mediamp-mpv:publishMpvRuntimeWindowsX64PublicationToAirGitHubPackagesRepository
+            ffmpeg_variant: windows
+            mpv_variant: windows
+            windows_args: '-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBoost_INCLUDE_DIR=C:/vcpkg/installed/x64-windows/include'
+          - id: windows-arm64
+            os: windows-11-arm
+            msystem: CLANGARM64
+            publish_task: :mediamp-mpv:publishMpvRuntimeWindowsArm64PublicationToAirGitHubPackagesRepository
+            ffmpeg_variant: windows
+            mpv_variant: windows
+            windows_args: '-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBoost_INCLUDE_DIR=C:/vcpkg/installed/x64-windows/include'
+          - id: linux-x64
+            os: ubuntu-24.04
+            publish_task: :mediamp-mpv:publishMpvRuntimeLinuxX64PublicationToAirGitHubPackagesRepository
+            ffmpeg_variant: linux
+            mpv_variant: linux
+            windows_args: ''
+          - id: macos-x64
+            os: macos-15-intel
+            publish_task: :mediamp-mpv:publishMpvRuntimeMacosX64PublicationToAirGitHubPackagesRepository
+            ffmpeg_variant: macos
+            mpv_variant: macos
+            windows_args: ''
+          - id: macos-arm64
+            os: macos-15
+            publish_task: :mediamp-mpv:publishMpvRuntimeMacosArm64PublicationToAirGitHubPackagesRepository
+            ffmpeg_variant: macos
+            mpv_variant: macos
+            windows_args: ''
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+      - name: Check out Air video contract
+        run: git clone --depth 1 https://github.com/get-air/video.git ../video
+      - name: Validate package versions
+        shell: bash
+        env:
+          PACKAGE_VERSION: ${{ inputs.version }}
+          AIR_VIDEO_VERSION: ${{ inputs.air_video_version }}
+        run: |
+          [[ "$PACKAGE_VERSION" =~ ^[0-9A-Za-z][0-9A-Za-z._-]{0,63}$ ]]
+          [[ "$AIR_VIDEO_VERSION" =~ ^[0-9A-Za-z][0-9A-Za-z._-]{0,63}$ ]]
+      - name: Set up Windows ARM64 JDK 17
+        if: matrix.id == 'windows-arm64'
+        uses: gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d
+        with:
+          java-version: '17'
+          distribution: microsoft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up JBR 21
+        uses: gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d
+        with:
+          java-version: '21'
+          distribution: jetbrains
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure toolchain
+        shell: bash
+        run: echo 'jvm.toolchain.version=21' >> local.properties
+      - name: Set up MSYS2 x64
+        if: matrix.id == 'windows-x64'
+        id: msys-x64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git mingw-w64-ucrt-x86_64-ca-certificates mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-libass mingw-w64-ucrt-x86_64-libplacebo
+            mingw-w64-ucrt-x86_64-meson mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-python-certifi
+            mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-shaderc
+            mingw-w64-ucrt-x86_64-spirv-cross
+      - name: Configure MSYS2 x64 root
+        if: matrix.id == 'windows-x64'
+        shell: pwsh
+        run: |
+          $msys2Dir = '${{ steps.msys-x64.outputs.msys2-location }}'.Replace('\', '/')
+          "msys2.dir=$msys2Dir" >> local.properties
+      - name: Set up MSYS2 ARM64
+        if: matrix.id == 'windows-arm64'
+        id: msys-arm64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANGARM64
+          update: true
+          install: >-
+            git mingw-w64-clang-aarch64-clang mingw-w64-clang-aarch64-lld
+            mingw-w64-clang-aarch64-libass mingw-w64-clang-aarch64-libplacebo
+            mingw-w64-clang-aarch64-meson mingw-w64-clang-aarch64-ninja
+            mingw-w64-clang-aarch64-pkgconf mingw-w64-clang-aarch64-nasm
+            mingw-w64-clang-aarch64-openssl mingw-w64-clang-aarch64-ca-certificates
+            mingw-w64-clang-aarch64-python-certifi mingw-w64-clang-aarch64-python
+            mingw-w64-clang-aarch64-shaderc mingw-w64-clang-aarch64-spirv-cross
+      - name: Configure MSYS2 ARM64 root
+        if: matrix.id == 'windows-arm64'
+        shell: pwsh
+        run: |
+          $msys2Dir = '${{ steps.msys-arm64.outputs.msys2-location }}'.Replace('\', '/')
+          "msys2.dir=$msys2Dir" >> local.properties
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          chmod +x ./ci-helper/install-ffmpeg-deps-ubuntu.sh ./ci-helper/install-mpv-deps-ubuntu.sh
+          ./ci-helper/install-ffmpeg-deps-ubuntu.sh
+          ./ci-helper/install-mpv-deps-ubuntu.sh
+      - name: Install macOS native dependencies
+        if: runner.os == 'macOS'
+        run: brew install nasm meson ninja libass libplacebo
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: true
+      - name: Build and publish native runtime
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          ./gradlew ${{ matrix.publish_task }}
+          "-Pversion.name=${{ inputs.version }}"
+          "-Pmediamp.ffmpeg.buildvariant=${{ matrix.ffmpeg_variant }}"
+          "-Pmediamp.mpv.buildvariant=${{ matrix.mpv_variant }}"
+          "-Pkotlin.native.ignoreDisabledTargets=true"
+          "-Dorg.gradle.jvmargs=-Xmx4g"
+          "-Dkotlin.daemon.jvm.options=-Xmx4g"
+          ${{ matrix.windows_args }}
+          --no-configuration-cache
+          --console=plain
+      - name: Upload runtime for aggregate metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.id }}
+          path: mediamp-mpv/build/libs/mediamp-mpv-runtime-*-${{ matrix.id }}.jar
+          if-no-files-found: error
+          overwrite: true
+
+  metadata:
+    name: Publish adapter and aggregate metadata
+    needs: runtime
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+      - name: Check out Air video contract
+        run: git clone --depth 1 https://github.com/get-air/video.git ../video
+      - name: Validate package versions
+        env:
+          PACKAGE_VERSION: ${{ inputs.version }}
+          AIR_VIDEO_VERSION: ${{ inputs.air_video_version }}
+        run: |
+          [[ "$PACKAGE_VERSION" =~ ^[0-9A-Za-z][0-9A-Za-z._-]{0,63}$ ]]
+          [[ "$AIR_VIDEO_VERSION" =~ ^[0-9A-Za-z][0-9A-Za-z._-]{0,63}$ ]]
+      - uses: gmitch215/setup-java@6d2c5e1f82f180ae79f799f0ed6e3e5efb4e664d
+        with:
+          java-version: '21'
+          distribution: jetbrains
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Configure toolchain
+        run: echo 'jvm.toolchain.version=21' >> local.properties
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-x64
+          path: mediamp-mpv/build/prebuilt-runtime-jars/windows-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-arm64
+          path: mediamp-mpv/build/prebuilt-runtime-jars/windows-arm64
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-x64
+          path: mediamp-mpv/build/prebuilt-runtime-jars/linux-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-x64
+          path: mediamp-mpv/build/prebuilt-runtime-jars/macos-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-arm64
+          path: mediamp-mpv/build/prebuilt-runtime-jars/macos-arm64
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: true
+      - name: Verify Kotlin 2.1 adapter consumption
+        run: ./ci-helper/test-air-adapter-kotlin21.sh
+      - name: Publish JVM API, adapter, and runtime aggregate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          ./gradlew
+          :mediamp-api:publishDesktopPublicationToAirGitHubPackagesRepository
+          :mediamp-api:publishKotlinMultiplatformPublicationToAirGitHubPackagesRepository
+          :mediamp-internal-utils:publishDesktopPublicationToAirGitHubPackagesRepository
+          :mediamp-internal-utils:publishKotlinMultiplatformPublicationToAirGitHubPackagesRepository
+          :mediamp-native-loader:publishDesktopPublicationToAirGitHubPackagesRepository
+          :mediamp-native-loader:publishKotlinMultiplatformPublicationToAirGitHubPackagesRepository
+          :mediamp-mpv:publishDesktopPublicationToAirGitHubPackagesRepository
+          :mediamp-mpv:publishKotlinMultiplatformPublicationToAirGitHubPackagesRepository
+          :mediamp-mpv:publishMpvRuntimePublicationToAirGitHubPackagesRepository
+          :mediamp-air:publishMavenPublicationToAirGitHubPackagesRepository
+          "-Pversion.name=${{ inputs.version }}"
+          "-PAIR_ADAPTER_VERSION=${{ inputs.version }}"
+          "-PAIR_VIDEO_VERSION=${{ inputs.air_video_version }}"
+          "-Pmediamp.ffmpeg.buildvariant=windows,linux,macos"
+          "-Pmediamp.mpv.buildvariant=windows,linux,macos"
+          "-Pkotlin.native.ignoreDisabledTargets=true"
+          --no-configuration-cache
+          --console=plain

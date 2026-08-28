@@ -12,6 +12,7 @@ plugins {
 
 group = "com.getair"
 version = providers.gradleProperty("AIR_ADAPTER_VERSION").getOrElse("0.1.0-SNAPSHOT")
+val airVideoVersion = providers.gradleProperty("AIR_VIDEO_VERSION").getOrElse("0.1.0-SNAPSHOT")
 
 kotlin {
     jvmToolchain(17)
@@ -25,7 +26,7 @@ kotlin {
 }
 
 dependencies {
-    api("com.getair:video:0.1.0-SNAPSHOT")
+    api("com.getair:video:$airVideoVersion")
     api(libs.compose.ui)
     implementation(projects.mediampMpv)
     implementation(libs.kotlinx.coroutines.core)

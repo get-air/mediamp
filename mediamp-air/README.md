@@ -34,6 +34,10 @@ implementation("com.getair:video-mediamp-desktop:<air-version>")
 runtimeOnly("org.openani.mediamp:mediamp-mpv-runtime:<fork-version>")
 ```
 
-Until the fork's multi-host GitHub Packages publication is enabled, consume
-this module through the Air workspace composite build. Do not substitute a
-system mpv installation in production packages.
+`.github/workflows/air-packages.yml` is the manual, GitHub-only publication
+path. It builds each native runtime on its matching hosted OS/architecture,
+publishes those immutable modules to GitHub Packages, then publishes the JVM
+API, aggregate runtime metadata, and adapter after every host succeeds. No
+package is published merely by pushing code. Until that workflow completes for
+a release version, consume this module through the Air workspace composite
+build. Do not substitute a system mpv installation in production packages.

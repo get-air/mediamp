@@ -32,8 +32,13 @@ First fork work:
 The optional adapter emits Kotlin 2.1 metadata and has been compiled from a
 separate Kotlin 2.1 consumer. Mediamp implementation artifacts remain runtime
 dependencies, so app source never resolves the fork's public `impl` escape
-hatch. Full fork publication to GitHub Packages remains pending because native
-runtime artifacts must be assembled on their matching hosts.
+hatch. The manual `Air GitHub Packages` workflow now models the required
+aggregation: Windows x64/ARM64, Linux x64, and macOS x64/ARM64 publish native
+runtime modules only after building on matching hosted runners; a dependent
+Ubuntu job then publishes the JVM API, aggregate runtime metadata, and adapter.
+It accepts an explicit immutable version and never runs on push. The workflow
+remains unproven until its first authorized package release; no package has
+been published by this work.
 
 Hosted Linux CI validates compilation, native assembly, zero-config loading and
 reflection compatibility. Xvfb exposes llvmpipe GLX but Skiko selects its software
