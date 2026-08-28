@@ -15,6 +15,7 @@ import org.openani.mediamp.metadata.AudioTrack
 import org.openani.mediamp.metadata.Chapter
 import org.openani.mediamp.metadata.SubtitleTrack
 import org.openani.mediamp.metadata.TrackGroup
+import org.openani.mediamp.metadata.VideoTrack
 
 /**
  * An optional feature of the [org.openani.mediamp.MediampPlayer] that allows managing audio tracks.
@@ -30,6 +31,12 @@ public interface MediaMetadata : Feature {
      * The group of subtitle tracks, if supported. Returns `null` if subtitles are not supported.
      */
     public val subtitleTracks: TrackGroup<SubtitleTrack>?
+
+    /**
+     * The group of video renditions/tracks, if the backend exposes explicit selection.
+     */
+    public val videoTracks: TrackGroup<VideoTrack>?
+        get() = null
 
     /**
      * The list of chapters, if supported. Returns `null` if chapters are not supported.
@@ -57,6 +64,10 @@ public val MediampPlayer.audioTracks: TrackGroup<AudioTrack>?
 public val MediampPlayer.subtitleTracks: TrackGroup<SubtitleTrack>?
     get() = features[MediaMetadata]?.subtitleTracks
 
+/** Stable shortcut to [MediaMetadata.videoTracks]. */
+public val MediampPlayer.videoTracks: TrackGroup<VideoTrack>?
+    get() = features[MediaMetadata]?.videoTracks
+
 /**
  * Shortcut to access the [MediaMetadata.chapters].
  *
@@ -64,4 +75,3 @@ public val MediampPlayer.subtitleTracks: TrackGroup<SubtitleTrack>?
  */
 public val MediampPlayer.chapters: Flow<List<Chapter>>?
     get() = features[MediaMetadata]?.chapters
-

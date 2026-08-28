@@ -23,6 +23,7 @@ import org.openani.mediamp.InternalMediampApi
 import org.openani.mediamp.MediaStatus
 import org.openani.mediamp.PlaybackEvent
 import org.openani.mediamp.features.MediaMetadata
+import org.openani.mediamp.features.MediaTimeline
 import org.openani.mediamp.features.PlaybackSpeed
 import org.openani.mediamp.features.Screenshots
 import org.openani.mediamp.io.SeekableInput
@@ -248,8 +249,18 @@ class MpvMediampPlayerSmokeTest {
             assertTrue(duration in 4_000..6_000, "expected ~5s duration, got $duration")
 
             // Metadata: at least one audio-less video track list refresh happened without crash.
-            val metadata = player.features[MediaMetadata]
-            assertNotNull(metadata)
+            val metadata = assertNotNull(player.features[MediaMetadata])
+            val videoTrack = withTimeout(10_000) {
+                assertNotNull(metadata.videoTracks).candidates.first { it.isNotEmpty() }.first()
+            }
+            assertEquals(640, videoTrack.width)
+            assertEquals(360, videoTrack.height)
+            assertTrue(!videoTrack.codec.isNullOrBlank())
+
+            val timeline = assertNotNull(player.features[MediaTimeline]).snapshot.value
+            assertTrue(timeline.seekable)
+            assertTrue(timeline.acceptsSeek)
+            assertTrue(timeline.durationMillis?.let { it in 4_000..6_000 } == true)
 
             // Playback speed through the machine.
             val speed = assertNotNull(player.features[PlaybackSpeed.Key])

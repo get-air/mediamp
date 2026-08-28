@@ -253,3 +253,9 @@ internal fun mpvErrorToPlaybackException(mpvError: Int): PlaybackException {
     }
     return PlaybackException(code, "mpv playback failed (mpv_error=$mpvError)")
 }
+
+/** A source-agnostic failure: media URIs and header-bearing targets must never escape. */
+internal fun mpvLoadRejectedException(): PlaybackException = PlaybackException(
+    PlaybackErrorCode.INTERNAL,
+    "mpv rejected the media load command",
+)

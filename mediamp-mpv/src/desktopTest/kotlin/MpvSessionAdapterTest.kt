@@ -17,6 +17,7 @@ import org.openani.mediamp.TransportSnapshot
 import org.openani.mediamp.metadata.MediaProperties
 import org.openani.mediamp.mpv.internal.MpvSessionAdapter
 import org.openani.mediamp.mpv.internal.mpvErrorToPlaybackException
+import org.openani.mediamp.mpv.internal.mpvLoadRejectedException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -185,5 +186,14 @@ class MpvSessionAdapterTest {
         assertEquals(PlaybackErrorCode.UNSUPPORTED_FORMAT, mpvErrorToPlaybackException(-18).code) // UNSUPPORTED
         assertEquals(PlaybackErrorCode.INTERNAL, mpvErrorToPlaybackException(-20).code) // GENERIC
         assertEquals(PlaybackErrorCode.INTERNAL, mpvErrorToPlaybackException(0).code)
+    }
+
+    @Test
+    fun `synchronous load rejection never contains the media target`() {
+        val secretTarget = "https://provider.invalid/live?token=do-not-print"
+        val error = mpvLoadRejectedException()
+
+        assertFalse(secretTarget in error.toString())
+        assertFalse("provider.invalid" in error.toString())
     }
 }

@@ -25,6 +25,10 @@ public class SubtitleTrack @InternalMediampApi constructor(
     public val internalId: String,
     public val language: String?,
     public val labels: List<TrackLabel>,
+    public val format: String? = null,
+    public val external: Boolean = false,
+    public val isDefault: Boolean = false,
+    public val isForced: Boolean = false,
 ) : Track {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -32,7 +36,11 @@ public class SubtitleTrack @InternalMediampApi constructor(
         return id == other.id &&
                 internalId == other.internalId &&
                 language == other.language &&
-                labels == other.labels
+                labels == other.labels &&
+                format == other.format &&
+                external == other.external &&
+                isDefault == other.isDefault &&
+                isForced == other.isForced
     }
 
     override fun hashCode(): Int {
@@ -40,11 +48,16 @@ public class SubtitleTrack @InternalMediampApi constructor(
         result = 31 * result + internalId.hashCode()
         result = 31 * result + (language?.hashCode() ?: 0)
         result = 31 * result + labels.hashCode()
+        result = 31 * result + (format?.hashCode() ?: 0)
+        result = 31 * result + external.hashCode()
+        result = 31 * result + isDefault.hashCode()
+        result = 31 * result + isForced.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "SubtitleTrack(id='$id', internalId='$internalId', language=$language, labels=$labels)"
+        return "SubtitleTrack(id='$id', internalId='$internalId', language=$language, labels=$labels, " +
+                "format=$format, external=$external, isDefault=$isDefault, isForced=$isForced)"
     }
 }
 
@@ -53,6 +66,10 @@ public class AudioTrack @InternalMediampApi constructor(
     public val internalId: String,
     public val name: String?,
     public val labels: List<TrackLabel>,
+    public val channels: Int? = null,
+    public val codec: String? = null,
+    public val isDefault: Boolean = false,
+    public val isForced: Boolean = false,
 ) : Track {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -60,7 +77,11 @@ public class AudioTrack @InternalMediampApi constructor(
         return id == other.id &&
                 internalId == other.internalId &&
                 name == other.name &&
-                labels == other.labels
+                labels == other.labels &&
+                channels == other.channels &&
+                codec == other.codec &&
+                isDefault == other.isDefault &&
+                isForced == other.isForced
     }
 
     override fun hashCode(): Int {
@@ -68,11 +89,64 @@ public class AudioTrack @InternalMediampApi constructor(
         result = 31 * result + internalId.hashCode()
         result = 31 * result + (name?.hashCode() ?: 0)
         result = 31 * result + labels.hashCode()
+        result = 31 * result + (channels ?: 0)
+        result = 31 * result + (codec?.hashCode() ?: 0)
+        result = 31 * result + isDefault.hashCode()
+        result = 31 * result + isForced.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "AudioTrack(id='$id', internalId='$internalId', name=$name, labels=$labels)"
+        return "AudioTrack(id='$id', internalId='$internalId', name=$name, labels=$labels, " +
+                "channels=$channels, codec=$codec, isDefault=$isDefault, isForced=$isForced)"
+    }
+}
+
+public class VideoTrack @InternalMediampApi constructor(
+    public val id: String,
+    public val internalId: String,
+    public val language: String?,
+    public val labels: List<TrackLabel>,
+    public val width: Int? = null,
+    public val height: Int? = null,
+    public val bitrate: Long? = null,
+    public val codec: String? = null,
+    public val isDefault: Boolean = false,
+    public val isForced: Boolean = false,
+) : Track {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is VideoTrack) return false
+        return id == other.id &&
+                internalId == other.internalId &&
+                language == other.language &&
+                labels == other.labels &&
+                width == other.width &&
+                height == other.height &&
+                bitrate == other.bitrate &&
+                codec == other.codec &&
+                isDefault == other.isDefault &&
+                isForced == other.isForced
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + internalId.hashCode()
+        result = 31 * result + (language?.hashCode() ?: 0)
+        result = 31 * result + labels.hashCode()
+        result = 31 * result + (width ?: 0)
+        result = 31 * result + (height ?: 0)
+        result = 31 * result + (bitrate?.hashCode() ?: 0)
+        result = 31 * result + (codec?.hashCode() ?: 0)
+        result = 31 * result + isDefault.hashCode()
+        result = 31 * result + isForced.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "VideoTrack(id='$id', internalId='$internalId', language=$language, labels=$labels, " +
+                "width=$width, height=$height, bitrate=$bitrate, codec=$codec, " +
+                "isDefault=$isDefault, isForced=$isForced)"
     }
 }
 

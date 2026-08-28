@@ -29,6 +29,7 @@ import org.openani.mediamp.features.AudioLevelController
 import org.openani.mediamp.features.Buffering
 import org.openani.mediamp.features.FramePreview
 import org.openani.mediamp.features.MediaMetadata
+import org.openani.mediamp.features.MediaTimeline
 import org.openani.mediamp.features.PlaybackSpeed
 import org.openani.mediamp.features.PlayerFeatures
 import org.openani.mediamp.features.Screenshots
@@ -43,17 +44,16 @@ import org.openani.mediamp.mpv.internal.MPV_END_FILE_REASON_EOF
 import org.openani.mediamp.mpv.internal.MPV_END_FILE_REASON_ERROR
 import org.openani.mediamp.mpv.internal.MpvSessionAdapter
 import org.openani.mediamp.mpv.internal.mpvErrorToPlaybackException
+import org.openani.mediamp.mpv.internal.mpvLoadRejectedException
 import org.openani.mediamp.source.MediaData
 import org.openani.mediamp.source.SeekableInputMediaData
 import org.openani.mediamp.source.UriMediaData
 import kotlin.concurrent.thread
 import kotlin.coroutines.CoroutineContext
 
-private const val SEEKABLE_INPUT_LOAD_TARGET_PREFIX = "mediamp://seekble_input_media/"
+private const val SEEKABLE_INPUT_LOAD_TARGET = "mediamp://seekable-input/current"
 
-private fun buildSeekableInputLoadTarget(data: SeekableInputMediaData): String {
-    return SEEKABLE_INPUT_LOAD_TARGET_PREFIX + data.uri
-}
+private fun buildSeekableInputLoadTarget(): String = SEEKABLE_INPUT_LOAD_TARGET
 
 /**
  * The shared JVM (desktop + Android) mpv backend.
@@ -137,6 +137,7 @@ abstract class JvmMpvMediampPlayer(
     private val screenshots = MpvScreenshots { path -> takeScreenshotImpl(path) }
     private val videoAspectRatio = MpvVideoAspectRatio(handle)
     private val mediaMetadata = MpvMediaMetadata(handle)
+    private val mediaTimeline = MpvMediaTimeline(handle)
     private val framePreview: FramePreview? = createMpvFramePreview(this, context, parentCoroutineContext)
 
     override val features: PlayerFeatures = buildPlayerFeatures {
@@ -146,6 +147,7 @@ abstract class JvmMpvMediampPlayer(
         add(Screenshots.Key, screenshots)
         add(VideoAspectRatio.Key, videoAspectRatio)
         add(MediaMetadata, mediaMetadata)
+        add(MediaTimeline, mediaTimeline)
         framePreview?.let { add(FramePreview.Key, it) }
     }
 
@@ -162,6 +164,7 @@ abstract class JvmMpvMediampPlayer(
                 "track-list" -> mediaMetadata.refreshTracks()
                 "chapter-list" -> mediaMetadata.refreshChapters()
                 "video-params" -> refreshVideoSize()
+                "demuxer-cache-state" -> mediaTimeline.refresh()
             }
         }
 
@@ -181,6 +184,8 @@ abstract class JvmMpvMediampPlayer(
                 "paused-for-cache" -> {
                     sessionAdapter?.session?.reportTransport(liveTransportSnapshot())
                 }
+
+                "seekable", "partially-seekable" -> mediaTimeline.refresh()
 
                 "mute" -> audioLevelController.onMuteChanged(value)
 
@@ -213,6 +218,7 @@ abstract class JvmMpvMediampPlayer(
                     val adapter = sessionAdapter ?: return
                     adapter.lastDurationMillis = (value * 1000).toLong().takeIf { it > 0 } // unknown -> null
                     adapter.session.notifyProperties(adapter.mediaProperties())
+                    mediaTimeline.refresh()
                 }
 
                 "volume" -> audioLevelController.onVolumeChanged(value)
@@ -236,6 +242,8 @@ abstract class JvmMpvMediampPlayer(
             when (event) {
                 MPVEvent.FILE_LOADED -> {
                     readVideoSize(adapter)
+                    mediaMetadata.refreshTracks()
+                    mediaTimeline.refresh()
                     adapter.onFileLoaded()
                     adapter.pendingOpen?.complete(Unit)
                 }
@@ -457,6 +465,9 @@ abstract class JvmMpvMediampPlayer(
         handle.observeProperty("chapter-list", MPVFormat.MPV_FORMAT_NONE)
         handle.observeProperty("video-params", MPVFormat.MPV_FORMAT_NONE)
         handle.observeProperty("hwdec-current", MPVFormat.MPV_FORMAT_NONE)
+        handle.observeProperty("seekable", MPVFormat.MPV_FORMAT_FLAG)
+        handle.observeProperty("partially-seekable", MPVFormat.MPV_FORMAT_FLAG)
+        handle.observeProperty("demuxer-cache-state", MPVFormat.MPV_FORMAT_NONE)
 
     }
 
@@ -528,7 +539,7 @@ abstract class JvmMpvMediampPlayer(
             }
 
             is SeekableInputMediaData -> {
-                val target = buildSeekableInputLoadTarget(data)
+                val target = buildSeekableInputLoadTarget()
                 // The input's reads run on mpv demux threads for the whole session, and a
                 // read that must wait for data (e.g. a torrent input awaiting an
                 // undownloaded piece) blocks inside the await context passed here. This
@@ -590,10 +601,7 @@ abstract class JvmMpvMediampPlayer(
                 handle.command("loadfile", loadTarget, "replace")
             }
             if (!loaded) {
-                throw PlaybackException(
-                    PlaybackErrorCode.INTERNAL,
-                    "mpv rejected the 'loadfile' command for $loadTarget",
-                )
+                throw mpvLoadRejectedException()
             }
             // The entry id of the just-loaded file, read synchronously (`loadfile ...
             // replace` leaves exactly this entry in the playlist): authoritative binding
@@ -672,6 +680,7 @@ abstract class JvmMpvMediampPlayer(
         sessionAdapter = null
         handle.command("stop")
         mediaMetadata.clear()
+        mediaTimeline.clear()
         buffering.bufferedPercentage.value = 0
     }
 
@@ -683,6 +692,7 @@ abstract class JvmMpvMediampPlayer(
         sessionAdapter = null
         (framePreview as? AutoCloseable)?.close()
         mediaMetadata.clear()
+        mediaTimeline.clear()
         // Released is already committed and the session detached; do the heavy native
         // teardown off the machine thread (spec §4): mpv destruction joins the native event
         // thread, which used to hang the UI thread (v1 defect M8). Daemon so that a wedged

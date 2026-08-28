@@ -28,6 +28,7 @@ import org.openani.mediamp.metadata.SubtitleTrack
 import org.openani.mediamp.metadata.Track
 import org.openani.mediamp.metadata.TrackGroup
 import org.openani.mediamp.metadata.TrackLabel
+import org.openani.mediamp.metadata.VideoTrack
 
 @OptIn(InternalForInheritanceMediampApi::class)
 internal class MpvAudioLevelController(private val handle: MPVHandle) : AudioLevelController {
@@ -145,6 +146,9 @@ internal class MpvMediaMetadata(private val handle: MPVHandle) : MediaMetadata {
     override val subtitleTracks: MpvTrackGroup<SubtitleTrack> = MpvTrackGroup { track ->
         handle.setPropertyString("sid", track?.internalId ?: "no")
     }
+    override val videoTracks: MpvTrackGroup<VideoTrack> = MpvTrackGroup { track ->
+        handle.setPropertyString("vid", track?.internalId ?: "no")
+    }
     override val chapters: MutableStateFlow<List<Chapter>> = MutableStateFlow(emptyList())
 
     /** Re-reads mpv's "track-list". Called from the mpv event thread on change notification. */
@@ -152,8 +156,10 @@ internal class MpvMediaMetadata(private val handle: MPVHandle) : MediaMetadata {
         val count = handle.getPropertyInt("track-list/count")
         val audio = mutableListOf<AudioTrack>()
         val subtitles = mutableListOf<SubtitleTrack>()
+        val video = mutableListOf<VideoTrack>()
         var selectedAudio: AudioTrack? = null
         var selectedSubtitle: SubtitleTrack? = null
+        var selectedVideo: VideoTrack? = null
 
         for (i in 0 until count) {
             val type = handle.getPropertyString("track-list/$i/type") ?: continue
@@ -161,6 +167,9 @@ internal class MpvMediaMetadata(private val handle: MPVHandle) : MediaMetadata {
             val title = handle.getPropertyString("track-list/$i/title")
             val lang = handle.getPropertyString("track-list/$i/lang")
             val isSelected = handle.getPropertyBoolean("track-list/$i/selected")
+            val isDefault = handle.getPropertyBoolean("track-list/$i/default")
+            val isForced = handle.getPropertyBoolean("track-list/$i/forced")
+            val codec = handle.getPropertyString("track-list/$i/codec")
             val label = title ?: lang ?: "#$id"
 
             when (type) {
@@ -170,6 +179,10 @@ internal class MpvMediaMetadata(private val handle: MPVHandle) : MediaMetadata {
                         internalId = id.toString(),
                         name = title,
                         labels = listOf(TrackLabel(language = null, value = label)),
+                        channels = handle.getPropertyInt("track-list/$i/demux-channel-count").takeIf { it > 0 },
+                        codec = codec,
+                        isDefault = isDefault,
+                        isForced = isForced,
                     )
                     audio.add(track)
                     if (isSelected) selectedAudio = track
@@ -181,15 +194,44 @@ internal class MpvMediaMetadata(private val handle: MPVHandle) : MediaMetadata {
                         internalId = id.toString(),
                         language = lang,
                         labels = listOf(TrackLabel(language = null, value = label)),
+                        format = codec,
+                        external = handle.getPropertyBoolean("track-list/$i/external"),
+                        isDefault = isDefault,
+                        isForced = isForced,
                     )
                     subtitles.add(track)
                     if (isSelected) selectedSubtitle = track
+                }
+
+                "video" -> {
+                    if (handle.getPropertyBoolean("track-list/$i/image") ||
+                        handle.getPropertyBoolean("track-list/$i/albumart")
+                    ) {
+                        continue
+                    }
+                    val track = VideoTrack(
+                        id = "video-$id",
+                        internalId = id.toString(),
+                        language = lang,
+                        labels = listOf(TrackLabel(language = null, value = label)),
+                        width = handle.getPropertyInt("track-list/$i/demux-w").takeIf { it > 0 },
+                        height = handle.getPropertyInt("track-list/$i/demux-h").takeIf { it > 0 },
+                        bitrate = handle.getPropertyInt("track-list/$i/demux-bitrate")
+                            .takeIf { it > 0 }
+                            ?.toLong(),
+                        codec = codec,
+                        isDefault = isDefault,
+                        isForced = isForced,
+                    )
+                    video.add(track)
+                    if (isSelected) selectedVideo = track
                 }
             }
         }
 
         audioTracks.update(audio, selectedAudio)
         subtitleTracks.update(subtitles, selectedSubtitle)
+        videoTracks.update(video, selectedVideo)
     }
 
     /** Re-reads mpv's "chapter-list". Called from the mpv event thread on change notification. */
@@ -218,6 +260,7 @@ internal class MpvMediaMetadata(private val handle: MPVHandle) : MediaMetadata {
     fun clear() {
         audioTracks.clear()
         subtitleTracks.clear()
+        videoTracks.clear()
         chapters.value = emptyList()
     }
 }

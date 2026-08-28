@@ -34,6 +34,17 @@ class TrackTest {
         labels: List<TrackLabel> = listOf(TrackLabel(null, "AAC")),
     ) = AudioTrack(id, internalId, name, labels)
 
+    private fun videoTrack(
+        id: String = "video-1",
+        internalId: String = "1",
+        language: String? = null,
+        labels: List<TrackLabel> = listOf(TrackLabel(null, "1080p")),
+        width: Int? = 1920,
+        height: Int? = 1080,
+        bitrate: Long? = 8_000_000,
+        codec: String? = "h264",
+    ) = VideoTrack(id, internalId, language, labels, width, height, bitrate, codec)
+
     @Test
     fun `subtitle tracks with same fields are equal`() {
         assertEquals(subtitleTrack(), subtitleTrack())
@@ -61,11 +72,24 @@ class TrackTest {
     }
 
     @Test
+    fun `video tracks use rendition metadata in value equality`() {
+        assertEquals(videoTrack(), videoTrack())
+        assertEquals(videoTrack().hashCode(), videoTrack().hashCode())
+        assertNotEquals(videoTrack(), videoTrack(width = 1280, height = 720))
+        assertNotEquals(videoTrack(), videoTrack(bitrate = 4_000_000))
+        assertNotEquals(videoTrack(), videoTrack(codec = "hevc"))
+    }
+
+    @Test
     fun `subtitle track does not equal audio track with same fields`() {
         val labels = listOf(TrackLabel("zh", "简日"))
         assertNotEquals<Track>(
             SubtitleTrack("x", "1", null, labels),
             AudioTrack("x", "1", null, labels),
+        )
+        assertNotEquals<Track>(
+            SubtitleTrack("x", "1", null, labels),
+            VideoTrack("x", "1", null, labels),
         )
     }
 

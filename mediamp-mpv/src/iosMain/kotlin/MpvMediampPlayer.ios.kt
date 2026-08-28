@@ -39,6 +39,7 @@ import org.openani.mediamp.mpv.internal.MPV_END_FILE_REASON_EOF
 import org.openani.mediamp.mpv.internal.MPV_END_FILE_REASON_ERROR
 import org.openani.mediamp.mpv.internal.MpvSessionAdapter
 import org.openani.mediamp.mpv.internal.mpvErrorToPlaybackException
+import org.openani.mediamp.mpv.internal.mpvLoadRejectedException
 import org.openani.mediamp.source.MediaData
 import org.openani.mediamp.source.SeekableInputMediaData
 import org.openani.mediamp.source.UriMediaData
@@ -46,11 +47,9 @@ import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-private const val SEEKABLE_INPUT_LOAD_TARGET_PREFIX = "mediamp://seekble_input_media/"
+private const val SEEKABLE_INPUT_LOAD_TARGET = "mediamp://seekable-input/current"
 
-private fun buildSeekableInputLoadTarget(data: SeekableInputMediaData): String {
-    return SEEKABLE_INPUT_LOAD_TARGET_PREFIX + data.uri
-}
+private fun buildSeekableInputLoadTarget(): String = SEEKABLE_INPUT_LOAD_TARGET
 
 /**
  * The iOS mpv backend — currently **audio-only**.
@@ -410,7 +409,7 @@ actual class MpvMediampPlayer(
             }
 
             is SeekableInputMediaData -> {
-                val target = buildSeekableInputLoadTarget(data)
+                val target = buildSeekableInputLoadTarget()
                 // The input's reads run on mpv demux threads for the whole session, and a
                 // read that must wait for data (e.g. a torrent input awaiting an
                 // undownloaded piece) blocks inside the await context passed here. This
@@ -472,10 +471,7 @@ actual class MpvMediampPlayer(
                 handle.command("loadfile", loadTarget, "replace")
             }
             if (!loaded) {
-                throw PlaybackException(
-                    PlaybackErrorCode.INTERNAL,
-                    "mpv rejected the 'loadfile' command for $loadTarget",
-                )
+                throw mpvLoadRejectedException()
             }
             // The entry id of the just-loaded file, read synchronously (`loadfile ...
             // replace` leaves exactly this entry in the playlist): authoritative binding

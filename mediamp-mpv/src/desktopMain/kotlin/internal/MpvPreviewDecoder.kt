@@ -123,7 +123,7 @@ internal class MpvPreviewDecoder(
             is SeekableInputMediaData -> {
                 val input = data.createInput(Dispatchers.IO_ + inputAwaitJob)
                 val registered = try {
-                    handle.registerSeekableInput(input, FRAME_PREVIEW_LOAD_TARGET_PREFIX + data.uri)
+                    handle.registerSeekableInput(input, FRAME_PREVIEW_LOAD_TARGET_PREFIX + "current")
                 } catch (t: Throwable) {
                     input.close()
                     throw t

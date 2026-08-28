@@ -95,7 +95,7 @@ class MPVHandle private constructor(ptr: Long) : AutoCloseable {
         // IllegalStateException with the concrete reason, so it normally does not return
         // false; the check remains only as a defensive fallback.
         if (!nRegisterSeekableInput(ptr, input, uri, input.size)) {
-            error("Failed to register SeekableInput for mpv stream_cb: $uri")
+            error("Failed to register SeekableInput for mpv stream callback")
         }
         return uri
     }
